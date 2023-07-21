@@ -64,3 +64,17 @@ func testNesting(t *testing.T, ts Tasks) {
 		},
 	}, metas)
 }
+
+func TestDescriptions(t *testing.T) {
+	ts, err := Load("./testdata/task-descriptions")
+	assert.NoError(t, err)
+
+	metas := map[string]TaskMetadata{}
+	for id, t := range ts {
+		metas[id] = t.Metadata()
+	}
+
+	assert.NotNil(t, metas["test"].Description)
+	assert.NotNil(t, metas)
+
+}
