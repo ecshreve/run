@@ -121,6 +121,14 @@ func (ts Tasks) IDs() []string {
 	return ids
 }
 
+func (ts Tasks) Descriptions() map[string]string {
+	descs := map[string]string{}
+	for id, t := range ts {
+		descs[id] = t.Metadata().Description
+	}
+	return descs
+}
+
 // Validate inspects a set of Tasks and returns an error if
 // the set is invalid. If the error is not nill, its
 // [error.Error] will return a formatted multiline string

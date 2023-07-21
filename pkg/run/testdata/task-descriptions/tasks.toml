@@ -13,8 +13,7 @@
 
 [[task]]
   id = "detailed-desc"
-  description = """
-    This task has a very long multiline description
+  description = """This task has a very long multiline description
 
     Lorem ipsum dolor sit amet, consectetuer adipiscing elit. 
     Aenean commodo ligula eget dolor. Aenean massa. Cum sociis 

@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	fUI   = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
-	fDir  = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
-	fList = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
-
+	fUI           = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
+	fDir          = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fList         = flag.Bool("list", false, "Display the task list and exit. Includes truncated description. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
+	fListFull     = flag.Bool("list-full", false, "Display the task list with full description text and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
 	fVersion      = flag.Bool("version", false, "Display the version and exit.")
 	fHelp         = flag.Bool("help", false, "Display the help text and exit.")
 	fCredits      = flag.Bool("credits", false, "Display the open source credits and exit.")
@@ -62,9 +62,14 @@ func main() {
 	taskID := flag.Arg(0)
 	if taskID == "" {
 		if *fList {
-			fmt.Println(tasklistText(allTasks.IDs()))
+			fmt.Println(tasklistText(allTasks.IDs(), allTasks.Descriptions(), true))
 			os.Exit(0)
 		}
+		if *fListFull {
+			fmt.Println(tasklistText(allTasks.IDs(), allTasks.Descriptions(), false))
+			os.Exit(0)
+		}
+
 		fmt.Println(helpText())
 		os.Exit(0)
 	}
@@ -77,7 +82,7 @@ func main() {
 	}
 
 	if *fList {
-		fmt.Println(tasklistText(r.IDs()[1:]))
+		fmt.Println(tasklistText(r.IDs()[1:], r.Tasks().Descriptions(), false))
 		os.Exit(0)
 	}
 
@@ -144,12 +149,48 @@ func main() {
 	}
 }
 
-func tasklistText(ids []string) string {
+func prepTaskIDs(ids []string) []string {
+	maxLen := -1
+	for _, id := range ids {
+		if id == "interleaved" || id == "run" || len(id) <= maxLen {
+			continue
+		}
+		maxLen = len(id)
+	}
+
+	var b strings.Builder
+	for _, id := range ids {
+		if id == "interleaved" || id == "run" {
+			continue
+		}
+
+		pad := strings.Repeat(" ", maxLen-len(id))
+		b.WriteString(fmt.Sprintf("  %s%s\n", pad, id))
+	}
+
+	return strings.Split(b.String(), "\n")
+}
+
+func prepDescriptions(descriptions map[string]string, truncate bool) map[string]string {
+	ret := map[string]string{}
+	for id, desc := range descriptions {
+		if truncate && len(desc) > 40 {
+			desc = desc[:40] + "..."
+		}
+		ret[id] = desc
+	}
+	return ret
+}
+
+func tasklistText(ids []string, descriptions map[string]string, trunc bool) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, "")
 	fmt.Fprintln(b, "TASKS")
-	for _, id := range ids {
-		b.WriteString("  - " + id + "\n")
+
+	prepped := prepTaskIDs(ids)
+	preppedDescriptions := prepDescriptions(descriptions, trunc)
+	for _, id := range prepped {
+		b.WriteString(id + " : " + preppedDescriptions[strings.TrimSpace(id)] + "\n")
 	}
 	return b.String()
 }
