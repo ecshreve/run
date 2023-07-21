@@ -34,6 +34,11 @@ type TaskMetadata struct {
 	//   - in the TUI's task list.
 	ID string
 
+	// TODO: field doc comment
+	//
+	// Description contains additional context about the task.
+	Description string
+
 	// Type specifies how we manage a task.
 	//
 	// If the Type is "long",
