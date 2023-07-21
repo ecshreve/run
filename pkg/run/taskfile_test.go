@@ -1,10 +1,14 @@
 package run
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"testing"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTaskfileNestingWithDir(t *testing.T) {
@@ -74,7 +78,23 @@ func TestDescriptions(t *testing.T) {
 		metas[id] = t.Metadata()
 	}
 
-	assert.NotNil(t, metas["test"].Description)
-	assert.NotNil(t, metas)
+	fPath := "./testdata/task-descriptions/out.log"
+	if _, err := os.Stat(fPath); os.IsNotExist(err) {
+		// Expected output does not exist! Create it.
+		err := os.WriteFile(fPath, []byte(fmt.Sprintf("%+v", metas)), 0644)
+		require.NoError(t, err)
+	}
+
+	expected, err := os.ReadFile(fPath)
+	require.NoError(t, err)
+	
+	dmp := diffmatchpatch.New()
+	diff := dmp.DiffMain(string(expected), fmt.Sprintf("%+v", metas), false)
+	if len(diff) != 1 {
+		log.Printf("Unexpected output from task descriptions test, saved to fail.log:\n%s", dmp.DiffPrettyText(diff))
+		errFilePath := "./testdata/task-descriptions/fail.log"
+		err := os.WriteFile(errFilePath, []byte(fmt.Sprintf("%+v", metas)), 0644)
+		require.NoError(t, err)
+	}
 
 }
